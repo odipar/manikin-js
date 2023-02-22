@@ -1,0 +1,34 @@
+<html>
+    <head>
+        <script>
+             var data = null;
+             
+             function readFile(input) {
+                let file = input;
+        
+                let reader = new FileReader();
+        
+                reader.readAsText(file);
+        
+                reader.onload = function() {
+                    var parser = new DOMParser();
+                    data = parser.parseFromString(reader.result,"text/xml");
+                };
+        
+                reader.onerror = function() {
+                    console.log(reader.error);
+                };        
+            }
+            fetch('report.xml')
+                .then((response) => response.text())
+                 .then((d) => {
+                    var parser = new DOMParser();
+                    data = parser.parseFromString(d,"text/xml");
+                 });
+        </script>
+    </head>
+    <body>
+        <p>HELLO WORLD</p>
+        <input type="file" onchange="readFile(this.files[0])">
+    </body>
+</html>
