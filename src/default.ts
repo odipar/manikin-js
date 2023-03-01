@@ -1,12 +1,10 @@
 import Immutable from 'immutable';
 import { Id, Trs, Context } from './core';
-import SHA256 from 'crypto-js/sha256';
-import Base64 from 'crypto-js/enc-base64';
 
-
+/* A minimal (mutable!) Manikin Context implementation */
 export class DefaultContext implements Context {
-    objMap: Immutable.Map<Id<any>, any>
-    oldMap: Immutable.Map<Id<any>, any>
+    objMap: Map<Id<any>, any>
+    oldMap: Map<Id<any>, any>
 
     msg: any
     slf: any
@@ -22,16 +20,16 @@ export class DefaultContext implements Context {
         const mid = this.id as Id<O2>
         if (this.objMap.get(mid)) throw "Duplicate ID"
 
-        this.objMap = this.objMap.set(mid, obj)
+        this.objMap.set(mid, obj)
         return mid
     }
     val<O2>(val: O2): Id<O2> {
         const sVal = JSON.stringify(val)
-        const cHash = Base64.stringify(SHA256(sVal)) as Id<O2>
+        const cHash = sVal as Id<O2>
         if (this.objMap.get(cHash) && (JSON.stringify(this.objMap.get(cHash)) != sVal)) { 
-            throw `Different values map to same sha256 hash! + ${cHash}`
+            throw `Different values map to same value content + ${cHash}`
         }
-        this.objMap = this.objMap.set(cHash, val)
+        this.objMap.set(cHash, val)
 
         return cHash
     }
@@ -42,12 +40,11 @@ export class DefaultContext implements Context {
         throw "only objects can be changed"
     }
 
-    snd<I2 extends Id<O2>, O2, M2, R2>(id: I2, trs: () => Trs<I2, O2, M2, R2>, msg: M2): R2 {
+    snd<O2, M2, R2>(id: Id<O2>, trs: () => Trs<O2, M2, R2>, msg: M2): R2 {
         const _slf = this.slf
         const _msg = this.msg
-
-        const _objMap = this.objMap
-        const _oldMap = this.oldMap
+        const _obj = this.obj
+        const _old = this.old
         
         try {
             this.slf = id
@@ -62,9 +59,9 @@ export class DefaultContext implements Context {
                 const app = t.app(this)
 
                 this.old = old
-                this.oldMap = this.oldMap.set(id, old)
+                this.oldMap.set(id, old)
                 this.obj = app
-                this.objMap = this.objMap.set(id, app)
+                this.objMap.set(id, app)
 
                 const result = t.eff(this)
 
@@ -75,16 +72,19 @@ export class DefaultContext implements Context {
         }
         catch (error) {
             // rollback to previous obj, old map state
-            this.objMap = _objMap
-            this.oldMap = _oldMap
+            this.obj = _obj
+            this.old = _old
+            this.slf = _slf
+            this.objMap.set(_slf, _obj)
+            this.oldMap.set(_slf, _old)
             throw error
         }
         finally {
             // re-instate previous values
+            this.obj = _obj
+            this.old = _old
             this.slf = _slf
             this.msg = _msg
-            this.obj = this.$obj(_slf)
-            this.old = this.$old(_slf)
         }
     }
 
@@ -93,8 +93,8 @@ export class DefaultContext implements Context {
     $old<O2>(id: Id<O2>): O2 { return this.oldMap.get(id) }
 
     constructor() {
-        this.objMap = Immutable.Map()
-        this.oldMap = Immutable.Map()
+        this.objMap = new Map()
+        this.oldMap = new Map()
         this.id = 0
     }
 }
