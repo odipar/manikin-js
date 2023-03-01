@@ -1,12 +1,19 @@
-export type Id<O> = { 
+export type Id<O> = {
     readonly evidence?: O    // type evidence member that is always undefined
 }
-     
-export type Context = {
-    mk<O2>(obj: O2): Id<O2>
-    val<O2>(val: O2): Id<O2>
 
-    snd<O2, M2, R2>(id: Id<O2>, trs: () => Trs<O2, M2, R2>, msg: M2): R2
+/* 
+ * With a Context you can:
+ *
+ * 1) make (mk) new identities Id<O>, given object O 
+ * 2) create new values (val) with identity Id<O>, given value O
+ * 3) send 'transactional' messages M to object/value O with identity Id<O>, given transaction TRS<O, M, R>, returning R
+ */
+export type Context = {
+    mk<O>(obj: O): Id<O>
+    val<V>(val: V): Id<V>
+
+    snd<O, M, R>(id: Id<O>, trs: () => Trs<O, M, R>, msg: M): R
 }
 
 export type IniContext<O, M> = {
@@ -19,7 +26,7 @@ export type PreContext<O, M> = IniContext<O, M> & {
     $obj<O2>(id: Id<O2>): O2
 }
 
-export type AppContext<O, M> = IniContext<O, M> & { 
+export type AppContext<O, M> = IniContext<O, M> & {
     chg(o: O): O
 }
 

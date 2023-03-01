@@ -1,10 +1,14 @@
-import Immutable from 'immutable';
 import { Id, Trs, Context } from './core';
 
-/* A minimal (mutable!) Manikin Context implementation */
+/* 
+ * A minimal (mutable!) Manikin Context implementation
+ * Note that everything is untyped!
+ */
+
+/* eslint-disable */
 export class DefaultContext implements Context {
-    objMap: Map<Id<any>, any>
-    oldMap: Map<Id<any>, any>
+    objMap: Map<any, any>
+    oldMap: Map<any, any>
 
     msg: any
     slf: any
@@ -14,38 +18,39 @@ export class DefaultContext implements Context {
 
     id: number
 
-    mk<O2>(obj: O2): Id<O2> {
+    mk<O>(obj: O): Id<O> {
+        // basic ID scheme
         this.id = this.id + 1
-        
-        const mid = this.id as Id<O2>
-        if (this.objMap.get(mid)) throw "Duplicate ID"
+
+        const mid = this.id as Id<O>
+        if (this.objMap.get(mid) || this.oldMap.get(mid)) throw "MANIKIN: Duplicate ID"
 
         this.objMap.set(mid, obj)
         return mid
     }
-    val<O2>(val: O2): Id<O2> {
+    val<O>(val: O): Id<O> {
         const sVal = JSON.stringify(val)
-        const cHash = sVal as Id<O2>
-        if (this.objMap.get(cHash) && (JSON.stringify(this.objMap.get(cHash)) != sVal)) { 
-            throw `Different values map to same value content + ${cHash}`
+        const cHash = sVal as Id<O>
+        if (this.objMap.get(cHash) && (JSON.stringify(this.objMap.get(cHash)) != sVal)) {
+            throw `MANIKIN: Different values map to same value content + ${cHash}`
         }
         this.objMap.set(cHash, val)
 
         return cHash
     }
-    
+
     /// Convenience function to 'change' obj
     chg(o: any): any {
-        if (typeof this.obj == "object" && typeof o == 'object') return { ...this.obj, ...o}
-        throw "only objects can be changed"
+        if (typeof this.obj == "object" && typeof o == 'object') return { ...this.obj, ...o }
+        throw "MANIKIN: Only objects can be 'changed'"
     }
 
-    snd<O2, M2, R2>(id: Id<O2>, trs: () => Trs<O2, M2, R2>, msg: M2): R2 {
+    snd<O, M, R>(id: Id<O>, trs: () => Trs<O, M, R>, msg: M): R {
         const _slf = this.slf
         const _msg = this.msg
         const _obj = this.obj
         const _old = this.old
-        
+
         try {
             this.slf = id
             this.msg = msg
@@ -53,19 +58,20 @@ export class DefaultContext implements Context {
 
             const t = trs()
 
-            if (!t.pre(this)) throw `Pre condition failed: ${t.pre.toString()}`
+            if (!t.pre(this)) throw `MANIKIN: Pre condition failed: ${t.pre.toString()}`
             else {
                 const old = this.obj
                 const app = t.app(this)
 
                 this.old = old
-                this.oldMap.set(id, old)
                 this.obj = app
+
+                this.oldMap.set(id, old)
                 this.objMap.set(id, app)
 
                 const result = t.eff(this)
 
-                if (!t.pst(this)) throw `Post condition failed: ${t.pst.toString()}`
+                if (!t.pst(this)) throw `MANIKIN: Post condition failed: ${t.pst.toString()}`
 
                 return result
             }
@@ -88,9 +94,9 @@ export class DefaultContext implements Context {
         }
     }
 
-    $obj<O2>(id: Id<O2>): O2 { return this.objMap.get(id) }
+    $obj<O>(id: Id<O>): O { return this.objMap.get(id) }
 
-    $old<O2>(id: Id<O2>): O2 { return this.oldMap.get(id) }
+    $old<O>(id: Id<O>): O { return this.oldMap.get(id) }
 
     constructor() {
         this.objMap = new Map()
