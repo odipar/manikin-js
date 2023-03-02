@@ -32,7 +32,7 @@ export function Transfer(): Trs<Transaction, null, void> {
             _.snd(_.obj.from, Withdraw, _.obj.amount)
             _.snd(_.obj.to, Deposit, _.obj.amount)
         },
-        pst: (_) => 
+        pst: (_) => // don't lose any money!
             _.$obj(_.obj.from).balance + _.$obj(_.obj.to).balance === 
             _.$old(_.obj.from).balance + _.$old(_.obj.to).balance
         

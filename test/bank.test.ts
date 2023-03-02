@@ -6,10 +6,10 @@ test("Execute a million bank transfers with pre/post condition checks", () => {
     
     const a1 = _.mk({name: "rob", balance: 20000000})
     const a2 = _.mk({name: "kev", balance: 30000000})
-    const t1 = _.mk({tid: 0, from: a1, to: a2, amount: 1})
     const million = 1000000
     
     for (var i = 0; i < million; i++) {
+        const t1 = _.mk({tid: 0, from: a1, to: a2, amount: 1})
         _.snd(t1, Transfer, null)
     }
 

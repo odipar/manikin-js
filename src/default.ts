@@ -7,8 +7,8 @@ import { Id, Trs, Context } from './core';
 
 /* eslint-disable */
 export class DefaultContext implements Context {
-    objMap: Map<any, any>
-    oldMap: Map<any, any>
+    objMap: any
+    oldMap: any
 
     msg: any
     slf: any
@@ -22,21 +22,21 @@ export class DefaultContext implements Context {
         // basic ID scheme
         this.id = this.id + 1
 
-        const mid = this.id as Id<O>
-        if (this.objMap.get(mid) || this.oldMap.get(mid)) throw "MANIKIN: Duplicate ID"
+        const mid = this.id 
+        if (this.objMap[mid] || this.oldMap[mid]) throw "MANIKIN: Duplicate ID"
 
-        this.objMap.set(mid, obj)
-        return mid
+        this.objMap[mid] = obj
+        return mid as Id<O>
     }
     val<O>(val: O): Id<O> {
         const sVal = JSON.stringify(val)
-        const cHash = sVal as Id<O>
-        if (this.objMap.get(cHash) && (JSON.stringify(this.objMap.get(cHash)) != sVal)) {
+        const cHash = sVal
+
+        if (this.objMap[cHash] && (JSON.stringify(this.objMap[cHash]) != sVal)) {
             throw `MANIKIN: Different values map to same value content + ${cHash}`
         }
-        this.objMap.set(cHash, val)
-
-        return cHash
+        this.objMap[cHash] = val
+        return cHash as Id<O>
     }
 
     /// Convenience function to 'change' obj
@@ -54,7 +54,7 @@ export class DefaultContext implements Context {
         try {
             this.slf = id
             this.msg = msg
-            this.obj = this.objMap.get(id)
+            this.obj = this.objMap[id as any]
 
             const t = trs()
 
@@ -66,8 +66,8 @@ export class DefaultContext implements Context {
                 this.old = old
                 this.obj = app
 
-                this.oldMap.set(id, old)
-                this.objMap.set(id, app)
+                this.oldMap[id as any] = old
+                this.objMap[id as any] = app
 
                 const result = t.eff(this)
 
@@ -81,8 +81,8 @@ export class DefaultContext implements Context {
             this.obj = _obj
             this.old = _old
             this.slf = _slf
-            this.objMap.set(_slf, _obj)
-            this.oldMap.set(_slf, _old)
+            this.objMap[_slf] = _obj
+            this.oldMap[_slf] = _old
             throw error
         }
         finally {
@@ -94,13 +94,13 @@ export class DefaultContext implements Context {
         }
     }
 
-    $obj<O>(id: Id<O>): O { return this.objMap.get(id) }
+    $obj<O>(id: Id<O>): O { return this.objMap[id as any] }
 
-    $old<O>(id: Id<O>): O { return this.oldMap.get(id) }
+    $old<O>(id: Id<O>): O { return this.oldMap[id as any] }
 
     constructor() {
-        this.objMap = new Map()
-        this.oldMap = new Map()
+        this.objMap = {}
+        this.oldMap = {}
         this.id = 0
     }
 }
