@@ -1,6 +1,6 @@
 {
   "name": "manikin-js",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Manikin transactional/functional objects",
   "main": "lib/export.js",
   "types": "lib/export.d.ts",
